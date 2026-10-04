@@ -1,0 +1,62 @@
+:root {
+  --bg: #e2e0dd;
+  --fg: #1d1d1f;
+  --muted: rgba(29, 29, 31, 0.55);
+  --chip: rgba(255, 255, 255, 0.55);
+  --chip-on: #1d1d1f;
+  --chip-on-fg: #fff;
+}
+body.dark {
+  --bg: #050505;
+  --fg: #f2f2f2;
+  --muted: rgba(242, 242, 242, 0.5);
+  --chip: rgba(255, 255, 255, 0.08);
+  --chip-on: #f2f2f2;
+  --chip-on-fg: #050505;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.4 ui-monospace, "IBM Plex Mono", Menlo, monospace;
+  transition: background 0.4s;
+}
+#stage { position: fixed; inset: 0; }
+#stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#ui {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  pointer-events: none;
+}
+#ui > * { pointer-events: auto; }
+#groups, #tabs, #controls { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+button {
+  font: inherit; color: var(--fg); background: var(--chip);
+  border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+button.on { background: var(--chip-on); color: var(--chip-on-fg); }
+button.primary { padding: 12px 22px; font-weight: 600; }
+#keys { color: var(--muted); font-size: 11px; }
+.hud {
+  position: fixed; top: 12px; left: 12px; width: 284px; padding: 12px;
+  background: var(--chip); border-radius: 14px; font-size: 11px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.hud.hidden { display: none; }
+.hud-info { margin-bottom: 8px; color: var(--fg); }
+.hud-info .map { color: var(--muted); }
+#toast {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--chip-on); color: var(--chip-on-fg); padding: 8px 14px; border-radius: 999px;
+  opacity: 0; transition: opacity 0.25s; pointer-events: none; max-width: calc(100vw - 32px);
+}
+#toast.show { opacity: 1; }
+@media (max-width: 640px) {
+  .hud { width: calc(100vw - 24px); }
+  #keys { display: none; }
+}
+#groups button { padding: 5px 12px; font-size: 11px; opacity: 0.75; }
+#groups button.on { opacity: 1; }
