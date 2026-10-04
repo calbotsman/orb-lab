@@ -15,6 +15,7 @@ agent's voice as it plays back. It listens, takes a breath while it thinks, then
 - **A tuner:** live sliders for every variant plus the shared presence. **📋 Copy params** exports your settings as JSON.
 - **A test agent:** Gemini Live, connected straight from the browser using a short-lived single-use token. Your API key never reaches the client.
 - **Sim convo:** a synthetic back-and-forth for tuning without a mic or an API key.
+- **Experiment: voice cards** (toggle **Voice cards**, or add `?exp=cards`). Ask "what's going on today?" and the agent brings up a calendar card. Say "I don't need my calendar anymore" and it folds away. It also has weather and a to-do list. The data is sample data, and tools are defined in `server/mint.ts`.
 
 ## Run it
 ```

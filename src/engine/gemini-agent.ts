@@ -14,6 +14,8 @@ export type AgentHandlers = {
   onTurnComplete?: () => void;
   onError?: (msg: string) => void;
   onClose?: () => void;
+  /** Run a tool call the agent made; the returned object goes back to the agent as the result. */
+  onToolCall?: (name: string, args: Record<string, unknown>) => Promise<Record<string, unknown>> | Record<string, unknown>;
 };
 
 export class GeminiAgent {
@@ -27,8 +29,8 @@ export class GeminiAgent {
     return this.session !== null;
   }
 
-  async connect() {
-    const r = await fetch(`${import.meta.env.BASE_URL}api/token`, { method: "POST" });
+  async connect(experiment = "talk") {
+    const r = await fetch(`${import.meta.env.BASE_URL}api/token?experiment=${encodeURIComponent(experiment)}`, { method: "POST" });
     const body = await r.json().catch(() => ({}));
     if (!r.ok || !body.token) throw new Error(body.error ?? `Could not start a session (${r.status}).`);
     const { token, model, voice, sessionSeconds } = body as { token: string; model: string; voice: string; sessionSeconds: number };
@@ -70,6 +72,7 @@ export class GeminiAgent {
   }
 
   private handle(msg: LiveServerMessage) {
+    if (msg.toolCall?.functionCalls?.length) void this.runTools(msg.toolCall.functionCalls);
     const sc = msg.serverContent;
     if (!sc) return;
     if (sc.interrupted) this.h.onInterrupted?.();
@@ -80,5 +83,19 @@ export class GeminiAgent {
       if (d?.data && String(d.mimeType ?? "").startsWith("audio/pcm")) this.h.onAudio?.(d.data);
     }
     if (sc.turnComplete) this.h.onTurnComplete?.();
+  }
+
+  private async runTools(calls: NonNullable<NonNullable<LiveServerMessage["toolCall"]>["functionCalls"]>) {
+    const functionResponses = [];
+    for (const call of calls) {
+      let response: Record<string, unknown>;
+      try {
+        response = (await this.h.onToolCall?.(call.name ?? "", call.args ?? {})) ?? { error: "no handler" };
+      } catch (e) {
+        response = { error: e instanceof Error ? e.message : String(e) };
+      }
+      functionResponses.push({ id: call.id, name: call.name, response });
+    }
+    this.session?.sendToolResponse({ functionResponses });
   }
 }

@@ -15,7 +15,8 @@ function tokenEndpoint(env: Record<string, string>): Plugin {
           return;
         }
         try {
-          res.end(JSON.stringify(await mintToken({ ...process.env, ...env })));
+          const experiment = new URL(req.url ?? "", "http://x").searchParams.get("experiment") ?? "talk";
+          res.end(JSON.stringify(await mintToken({ ...process.env, ...env }, experiment)));
         } catch (e) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));

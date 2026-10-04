@@ -3,6 +3,7 @@ import { Conversation } from "./engine/conversation";
 import { FeatureExtractor } from "./engine/features";
 import { Mic } from "./engine/mic";
 import { Player } from "./engine/player";
+import { CardLayer } from "./cards/card-layer";
 import { GeminiAgent } from "./engine/gemini-agent";
 import { SimConversation } from "./engine/sim";
 import { Hud } from "./ui/hud";
@@ -15,6 +16,7 @@ const stage = $<HTMLDivElement>("stage");
 const talkBtn = $<HTMLButtonElement>("talk");
 const simBtn = $<HTMLButtonElement>("sim");
 const micBtn = $<HTMLButtonElement>("mic-only");
+const cardsBtn = $<HTMLButtonElement>("cards-mode");
 const toastEl = $<HTMLDivElement>("toast");
 
 let toastTimer = 0;
@@ -49,6 +51,25 @@ function ensureGraph() {
   return graph;
 }
 
+// ── experiment: voice cards ──
+// With "Voice cards" on, the session gets tools to bring up and dismiss cards (?exp=cards).
+const cards = new CardLayer(document.body);
+let cardsMode = new URLSearchParams(location.search).get("exp") === "cards";
+function setCardsMode(on: boolean) {
+  cardsMode = on;
+  cardsBtn.classList.toggle("on", on);
+  const url = new URL(location.href);
+  if (on) url.searchParams.set("exp", "cards");
+  else url.searchParams.delete("exp");
+  history.replaceState(null, "", url);
+  if (!on) cards.toggle("all");
+}
+setCardsMode(cardsMode);
+cardsBtn.onclick = () => {
+  setCardsMode(!cardsMode);
+  if (agent) toast("Hang up and talk again to switch experiments");
+};
+
 async function startTalk() {
   const g = ensureGraph();
   await g.resume();
@@ -56,7 +77,9 @@ async function startTalk() {
   status = "connecting…";
   talkBtn.textContent = "Connecting…";
   agent = new GeminiAgent({
-    onReady: (i) => toast(`Agent is live · say hello (${Math.round(i.sessionSeconds / 60)} min session)`),
+    onReady: (i) =>
+      toast(cardsMode ? `Voice cards live · try "what's going on today?"` : `Agent is live · say hello (${Math.round(i.sessionSeconds / 60)} min session)`),
+    onToolCall: (name, args) => cards.handleTool(name, args),
     onAudio: (b64) => player!.enqueue(b64),
     onInterrupted: () => player!.stop(),
     onError: (m) => toast(m),
@@ -65,7 +88,7 @@ async function startTalk() {
     },
   });
   try {
-    await agent.connect();
+    await agent.connect(cardsMode ? "cards" : "talk");
     await mic!.start((b64) => agent?.sendAudio(b64));
     status = "live";
     talkBtn.textContent = "Hang up";
@@ -197,6 +220,11 @@ window.addEventListener("keydown", (e) => {
   } else if (e.key === "s" || e.key === "S") simBtn.click();
   else if (e.key === "h" || e.key === "H") hud.toggle();
   else if (e.key === "g" || e.key === "G") current?.tuner.toggle();
+  // card shortcuts, for tuning the motion without a voice session
+  else if (e.key === "c" || e.key === "C") cards.toggle("calendar");
+  else if (e.key === "w" || e.key === "W") cards.toggle("weather");
+  else if (e.key === "l" || e.key === "L") cards.toggle("list");
+  else if (e.key === "x" || e.key === "X") cards.toggle("all");
 });
 window.addEventListener("resize", () => current?.inst.resize(stage.clientWidth, stage.clientHeight));
 
