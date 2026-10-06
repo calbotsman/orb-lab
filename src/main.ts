@@ -64,7 +64,11 @@ function setCardStyle(style: CardStyle) {
   history.replaceState(null, "", url);
   stylesNav.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.style === style));
 }
+const stylesLabel = document.createElement("span");
+stylesLabel.className = "label";
+stylesLabel.textContent = "Cards appear by";
 stylesNav.replaceChildren(
+  stylesLabel,
   ...CARD_STYLES.map((st) => {
     const b = document.createElement("button");
     b.dataset.style = st;

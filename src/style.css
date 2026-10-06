@@ -143,5 +143,8 @@ body.dark .card header, body.dark .events .t, body.dark .events em { color: rgba
 .timer-big { position: relative; font-size: 40px; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
 .timer-done .timer-ring { animation: timer-done 1.6s ease-in-out infinite; }
 @keyframes timer-done { 50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(239, 160, 64, 0.15); } }
-#card-styles button { padding: 5px 12px; font-size: 11px; }
+#card-styles { align-items: center; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--chip); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+#card-styles .label { font-size: 11px; color: var(--muted); margin-right: 4px; }
+#card-styles button { padding: 5px 12px; font-size: 11px; background: transparent; }
+#card-styles button.on { background: var(--chip-on); color: var(--chip-on-fg); }
 #card-styles[hidden] { display: none; }
