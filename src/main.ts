@@ -7,7 +7,8 @@ import { CARD_STYLES, CardLayer, type CardStyle } from "./cards/card-layer";
 import { GeminiAgent } from "./engine/gemini-agent";
 import { SimConversation } from "./engine/sim";
 import { Hud } from "./ui/hud";
-import { Tuner, loadEngineParams, paramsFor } from "./ui/tuner";
+import { Tuner, loadEngineParams, paramsFor, savePresence } from "./ui/tuner";
+import { BEHAVIOURS, applyBehaviour } from "./engine/behaviours";
 import { VARIANTS } from "./variants";
 import type { Variant, VariantInstance } from "./variants/types";
 
@@ -16,7 +17,6 @@ const stage = $<HTMLDivElement>("stage");
 const talkBtn = $<HTMLButtonElement>("talk");
 const simBtn = $<HTMLButtonElement>("sim");
 const micBtn = $<HTMLButtonElement>("mic-only");
-const cardsBtn = $<HTMLButtonElement>("cards-mode");
 const toastEl = $<HTMLDivElement>("toast");
 
 let toastTimer = 0;
@@ -51,49 +51,64 @@ function ensureGraph() {
   return graph;
 }
 
-// ── experiment: voice cards ──
-// With "Voice cards" on, the session gets tools to bring up and dismiss cards (?exp=cards).
-const cards = new CardLayer(document.body);
-let cardsMode = new URLSearchParams(location.search).get("exp") === "cards";
-const stylesNav = $<HTMLElement>("card-styles");
-// How cards arrive and leave (?cardstyle=unfold|morph|narrate|satellite).
-function setCardStyle(style: CardStyle) {
-  cards.setStyle(style);
+// ── pickers: experiment, card style, behaviour ──
+const params = () => new URLSearchParams(location.search);
+function setParam(key: string, value: string | null) {
   const url = new URL(location.href);
-  url.searchParams.set("cardstyle", style);
+  if (value === null) url.searchParams.delete(key);
+  else url.searchParams.set(key, value);
   history.replaceState(null, "", url);
-  stylesNav.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.style === style));
 }
-const stylesLabel = document.createElement("span");
-stylesLabel.className = "label";
-stylesLabel.textContent = "Cards appear by";
-stylesNav.replaceChildren(
-  stylesLabel,
-  ...CARD_STYLES.map((st) => {
-    const b = document.createElement("button");
-    b.dataset.style = st;
-    b.textContent = st[0].toUpperCase() + st.slice(1);
-    b.onclick = () => setCardStyle(st);
-    return b;
-  }),
-);
-const startStyle = new URLSearchParams(location.search).get("cardstyle") as CardStyle | null;
-setCardStyle(startStyle && CARD_STYLES.includes(startStyle) ? startStyle : "unfold");
+function fillSelect(sel: HTMLSelectElement, items: Array<[string, string]>) {
+  sel.replaceChildren(...items.map(([value, label]) => Object.assign(document.createElement("option"), { value, textContent: label })));
+}
+
+// Experiment: "Just talk", or "Voice cards" where the session gets tools to bring up and
+// dismiss cards (?exp=cards).
+const cards = new CardLayer(document.body);
+const expSelect = $<HTMLSelectElement>("exp-select");
+const cardStylePick = $<HTMLElement>("cardstyle-pick");
+const cardStyleSelect = $<HTMLSelectElement>("cardstyle-select");
+let cardsMode = params().get("exp") === "cards";
 function setCardsMode(on: boolean) {
   cardsMode = on;
-  cardsBtn.classList.toggle("on", on);
-  stylesNav.hidden = !on;
-  const url = new URL(location.href);
-  if (on) url.searchParams.set("exp", "cards");
-  else url.searchParams.delete("exp");
-  history.replaceState(null, "", url);
+  expSelect.value = on ? "cards" : "talk";
+  cardStylePick.hidden = !on;
+  setParam("exp", on ? "cards" : null);
   if (!on) cards.toggle("all");
 }
-setCardsMode(cardsMode);
-cardsBtn.onclick = () => {
-  setCardsMode(!cardsMode);
+expSelect.onchange = () => {
+  setCardsMode(expSelect.value === "cards");
   if (agent) toast("Hang up and talk again to switch experiments");
 };
+setCardsMode(cardsMode);
+
+// How cards arrive and leave (?cardstyle=unfold|morph|narrate|satellite).
+fillSelect(cardStyleSelect, CARD_STYLES.map((st) => [st, st[0].toUpperCase() + st.slice(1)]));
+function setCardStyle(style: CardStyle) {
+  cards.setStyle(style);
+  cardStyleSelect.value = style;
+  setParam("cardstyle", style);
+}
+cardStyleSelect.onchange = () => setCardStyle(cardStyleSelect.value as CardStyle);
+const startStyle = params().get("cardstyle") as CardStyle | null;
+setCardStyle(startStyle && CARD_STYLES.includes(startStyle) ? startStyle : "unfold");
+
+// Behaviour: how it listens, thinks and speaks — presets for the shared presence layer (?b=).
+const behaviourSelect = $<HTMLSelectElement>("behaviour-select");
+fillSelect(behaviourSelect, Object.entries(BEHAVIOURS).map(([id, b]) => [id, b.label]));
+function setBehaviour(id: string, announce = false) {
+  if (!BEHAVIOURS[id]) id = "attentive";
+  applyBehaviour(id);
+  savePresence();
+  behaviourSelect.value = id;
+  setParam("b", id === "attentive" ? null : id);
+  current?.tuner.refresh();
+  if (announce) toast(`${BEHAVIOURS[id].label}: ${BEHAVIOURS[id].about}`);
+}
+behaviourSelect.onchange = () => setBehaviour(behaviourSelect.value, true);
+if (params().get("b")) setBehaviour(params().get("b")!);
+else behaviourSelect.value = "attentive";
 
 async function startTalk() {
   const g = ensureGraph();
@@ -197,45 +212,26 @@ function select(id: string) {
   const url = new URL(location.href);
   url.searchParams.set("v", v.id);
   history.replaceState(null, "", url);
-  group = groupOf(v);
-  renderTabs();
+  orbSelect.value = v.id;
 }
 
-// Tabs are grouped by each variant's `group` (default "Lab").
+// Orb picker, grouped by each variant's `group` (default "Lab").
 const groupOf = (v: Variant) => v.group ?? "Lab";
-const GROUPS = [...new Set(VARIANTS.map(groupOf))];
-let group = "";
-const groupsEl = $<HTMLElement>("groups");
-const tabs = $<HTMLElement>("tabs");
-const inGroup = () => VARIANTS.filter((v) => groupOf(v) === group);
-
-function renderTabs() {
-  groupsEl.replaceChildren(
-    ...GROUPS.map((g) => {
-      const b = document.createElement("button");
-      b.textContent = g;
-      b.classList.toggle("on", g === group);
-      b.onclick = () => select(VARIANTS.find((v) => groupOf(v) === g)!.id);
-      return b;
-    }),
-  );
-  tabs.replaceChildren(
-    ...inGroup().map((v, i) => {
-      const b = document.createElement("button");
-      b.dataset.id = v.id;
-      b.textContent = `${i < 9 ? `${i + 1} ` : ""}${v.name}${v.credit ? ` · ${v.credit.split(" ")[0]}` : ""}`;
-      b.classList.toggle("on", v.id === current?.id);
-      b.onclick = () => select(v.id);
-      return b;
-    }),
-  );
-}
+const orbSelect = $<HTMLSelectElement>("orb-select");
+orbSelect.replaceChildren(
+  ...[...new Set(VARIANTS.map(groupOf))].map((g) => {
+    const og = document.createElement("optgroup");
+    og.label = g;
+    og.append(...VARIANTS.filter((v) => groupOf(v) === g).map((v) => Object.assign(document.createElement("option"), { value: v.id, textContent: v.name })));
+    return og;
+  }),
+);
+orbSelect.onchange = () => select(orbSelect.value);
 
 window.addEventListener("keydown", (e) => {
   if ((e.target as HTMLElement).closest(".lil-gui")) return;
-  const n = Number(e.key);
-  if (n >= 1 && n <= inGroup().length) select(inGroup()[n - 1].id);
-  else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+  if ((e.target as HTMLElement).tagName === "SELECT") return;
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
     const i = VARIANTS.findIndex((x) => x.id === current?.id);
     const step = e.key === "ArrowRight" ? 1 : -1;
     select(VARIANTS[(i + step + VARIANTS.length) % VARIANTS.length].id);

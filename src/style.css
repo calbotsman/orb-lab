@@ -31,7 +31,7 @@ body {
   pointer-events: none;
 }
 #ui > * { pointer-events: auto; }
-#groups, #tabs, #card-styles, #controls { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#pickers, #controls { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 button {
   font: inherit; color: var(--fg); background: var(--chip);
   border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer;
@@ -58,8 +58,6 @@ button.primary { padding: 12px 22px; font-weight: 600; }
   .hud { width: calc(100vw - 24px); }
   #keys { display: none; }
 }
-#groups button { padding: 5px 12px; font-size: 11px; opacity: 0.75; }
-#groups button.on { opacity: 1; }
 
 /* ── voice cards experiment ─────────────────────────────── */
 /* While cards are up the orb rises and shrinks. A radial mask (animated through a registered
@@ -143,8 +141,18 @@ body.dark .card header, body.dark .events .t, body.dark .events em { color: rgba
 .timer-big { position: relative; font-size: 40px; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
 .timer-done .timer-ring { animation: timer-done 1.6s ease-in-out infinite; }
 @keyframes timer-done { 50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(239, 160, 64, 0.15); } }
-#card-styles { align-items: center; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--chip); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-#card-styles .label { font-size: 11px; color: var(--muted); margin-right: 4px; }
-#card-styles button { padding: 5px 12px; font-size: 11px; background: transparent; }
-#card-styles button.on { background: var(--chip-on); color: var(--chip-on-fg); }
-#card-styles[hidden] { display: none; }
+
+/* pickers: one row of dropdowns instead of rows of pills */
+#pickers { gap: 8px; }
+.pick {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 4px 4px 14px; border-radius: 999px;
+  background: var(--chip); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font-size: 11px; color: var(--muted);
+}
+.pick[hidden] { display: none; }
+.pick select {
+  appearance: none; -webkit-appearance: none; border: 0; border-radius: 999px; cursor: pointer;
+  font: 600 12px/1 ui-monospace, "IBM Plex Mono", Menlo, monospace; color: var(--fg);
+  padding: 8px 28px 8px 12px; background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;
+}
+body.dark .pick select { background-color: #1a1a1c; }

@@ -30,6 +30,11 @@ export function loadEngineParams() {
 
 const PRESENCE_DEFAULTS = { ...presenceParams };
 
+/** Persist the shared presence settings (used when a behaviour preset is picked). */
+export function savePresence() {
+  save(PRESENCE_KEY, presenceParams);
+}
+
 /** Current values for a variant: defaults overlaid with whatever you last tuned. */
 export function paramsFor(v: Variant): ParamValues {
   const defaults = defaultsOf(v.params);
@@ -114,6 +119,11 @@ export class Tuner {
     eng.add(engineParams, "vadHangMs", 50, 1000, 10).name("voice hang ms").onChange(persistEngine);
     eng.add(engineParams, "onsetSensitivity", 1.05, 4, 0.05).name("onset threshold").onChange(persistEngine);
     eng.add(engineParams, "bargeIn", 0.1, 1, 0.01).name("barge-in level").onChange(persistEngine);
+  }
+
+  /** Re-read every slider (after a behaviour preset changed the shared presence values). */
+  refresh() {
+    this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
   }
 
   toggle() {

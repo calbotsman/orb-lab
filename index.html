@@ -12,16 +12,21 @@
   <body>
     <div id="stage"></div>
     <div id="ui">
-      <nav id="groups"></nav>
-      <nav id="tabs"></nav>
+      <div id="pickers">
+        <label class="pick"><span>Orb</span><select id="orb-select"></select></label>
+        <label class="pick"><span>Behaviour</span><select id="behaviour-select"></select></label>
+        <label class="pick"><span>Experiment</span><select id="exp-select">
+          <option value="talk">Just talk</option>
+          <option value="cards">Voice cards</option>
+        </select></label>
+        <label class="pick" id="cardstyle-pick" hidden><span>Cards appear by</span><select id="cardstyle-select"></select></label>
+      </div>
       <div id="controls">
         <button id="talk" class="primary">Talk to agent</button>
         <button id="sim">Sim convo</button>
         <button id="mic-only">Mic only</button>
-        <button id="cards-mode" title="Experiment: the agent can bring up and dismiss cards">Voice cards</button>
       </div>
-      <nav id="card-styles" hidden aria-label="How cards appear"></nav>
-      <div id="keys">1–9 / ← → variant · space talk · S sim · H hud · G tuner · cards: C W L T, X clear</div>
+      <div id="keys">← → orb · space talk · S sim · H readings · G tuner · cards: C W L T, X clear</div>
     </div>
     <div id="toast"></div>
     <script type="module" src="/src/main.ts"></script>
