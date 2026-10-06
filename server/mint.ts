@@ -20,6 +20,7 @@ screen with tools, and take them away again.
 - Their day, schedule, meetings, "what's going on": call show_calendar (day "today" or "tomorrow").
 - Weather, "do I need a jacket": call show_weather.
 - Their to-do list or reminders: call show_list. To add something: call add_to_list.
+- A timer or countdown ("set a timer for ten minutes"): call set_timer.
 - When they are done with a card ("I don't need that anymore", "close that", "thanks, got it",
   "clear the screen"): call dismiss_card with that card, or "all".
 After a card appears, give a short spoken summary. The card carries the detail, so don't read
@@ -44,11 +45,23 @@ const CARD_TOOLS: FunctionDeclaration[] = [
     parameters: { type: Type.OBJECT, properties: { item: { type: Type.STRING } }, required: ["item"] },
   },
   {
+    name: "set_timer",
+    description: "Start a countdown timer card.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        minutes: { type: Type.NUMBER, description: "Length in minutes (fractions allowed, e.g. 0.5 for 30 seconds)." },
+        label: { type: Type.STRING, description: "Optional short label, e.g. 'pasta'." },
+      },
+      required: ["minutes"],
+    },
+  },
+  {
     name: "dismiss_card",
     description: "Remove a card from the screen when the user is done with it.",
     parameters: {
       type: Type.OBJECT,
-      properties: { card: { type: Type.STRING, enum: ["calendar", "weather", "list", "all"] } },
+      properties: { card: { type: Type.STRING, enum: ["calendar", "weather", "list", "timer", "all"] } },
       required: ["card"],
     },
   },

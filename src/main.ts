@@ -3,7 +3,7 @@ import { Conversation } from "./engine/conversation";
 import { FeatureExtractor } from "./engine/features";
 import { Mic } from "./engine/mic";
 import { Player } from "./engine/player";
-import { CardLayer } from "./cards/card-layer";
+import { CARD_STYLES, CardLayer, type CardStyle } from "./cards/card-layer";
 import { GeminiAgent } from "./engine/gemini-agent";
 import { SimConversation } from "./engine/sim";
 import { Hud } from "./ui/hud";
@@ -55,9 +55,30 @@ function ensureGraph() {
 // With "Voice cards" on, the session gets tools to bring up and dismiss cards (?exp=cards).
 const cards = new CardLayer(document.body);
 let cardsMode = new URLSearchParams(location.search).get("exp") === "cards";
+const stylesNav = $<HTMLElement>("card-styles");
+// How cards arrive and leave (?cardstyle=unfold|morph|narrate|satellite).
+function setCardStyle(style: CardStyle) {
+  cards.setStyle(style);
+  const url = new URL(location.href);
+  url.searchParams.set("cardstyle", style);
+  history.replaceState(null, "", url);
+  stylesNav.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.style === style));
+}
+stylesNav.replaceChildren(
+  ...CARD_STYLES.map((st) => {
+    const b = document.createElement("button");
+    b.dataset.style = st;
+    b.textContent = st[0].toUpperCase() + st.slice(1);
+    b.onclick = () => setCardStyle(st);
+    return b;
+  }),
+);
+const startStyle = new URLSearchParams(location.search).get("cardstyle") as CardStyle | null;
+setCardStyle(startStyle && CARD_STYLES.includes(startStyle) ? startStyle : "unfold");
 function setCardsMode(on: boolean) {
   cardsMode = on;
   cardsBtn.classList.toggle("on", on);
+  stylesNav.hidden = !on;
   const url = new URL(location.href);
   if (on) url.searchParams.set("exp", "cards");
   else url.searchParams.delete("exp");
@@ -224,6 +245,7 @@ window.addEventListener("keydown", (e) => {
   else if (e.key === "c" || e.key === "C") cards.toggle("calendar");
   else if (e.key === "w" || e.key === "W") cards.toggle("weather");
   else if (e.key === "l" || e.key === "L") cards.toggle("list");
+  else if (e.key === "t" || e.key === "T") cards.toggle("timer");
   else if (e.key === "x" || e.key === "X") cards.toggle("all");
 });
 window.addEventListener("resize", () => current?.inst.resize(stage.clientWidth, stage.clientHeight));
@@ -254,6 +276,7 @@ function frame(nowMs: number) {
     silentConvo.update(dt, now, false, false);
   }
   current?.inst.frame(sig, dt);
+  cards.frame(sig, now);
   hud.draw(sig, current?.mapping ?? "", status);
 }
 requestAnimationFrame(frame);
