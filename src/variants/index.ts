@@ -1,8 +1,5 @@
 import * as THREE from "three";
-import { grainDuet } from "./grain-duet";
-import { driftGrain } from "./drift-grain";
 import { driftBody } from "./drift-body";
-import { bloom } from "./bloom";
 import { tide } from "./tide";
 import { halo } from "./halo";
 import { charcoal, graphite } from "./graphite";
@@ -10,8 +7,6 @@ import { ripple } from "./ripple";
 import { liquid } from "./liquid";
 import { swarm } from "./swarm";
 import { membrane } from "./membrane";
-import { oneBody } from "./one-body";
-import { twoBodies } from "./two-bodies";
 import type { Variant } from "./types";
 
 // Hex params go straight into raw ShaderMaterials; keep colours as authored (sRGB in, sRGB out).
@@ -21,7 +16,6 @@ THREE.ColorManagement.enabled = false;
 export const VARIANTS: Variant[] = [
   // new — iter/06: forms built on the presence layer + temperature colour
   charcoal, graphite, halo, ripple, liquid, swarm,
-  // calm pass — Claude, after round 2 (Grain Duet / one body + Warm Drift's temperature colour)
-  driftGrain, driftBody, bloom, tide,
-  grainDuet, twoBodies, oneBody, membrane,
+  // calm pass
+  driftBody, tide, membrane,
 ];
