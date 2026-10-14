@@ -9,7 +9,6 @@ import { charcoal, graphite } from "./graphite";
 import { ripple } from "./ripple";
 import { liquid } from "./liquid";
 import { swarm } from "./swarm";
-import { meter } from "./meter";
 import { membrane } from "./membrane";
 import { oneBody } from "./one-body";
 import { twoBodies } from "./two-bodies";
@@ -24,5 +23,5 @@ export const VARIANTS: Variant[] = [
   charcoal, graphite, halo, ripple, liquid, swarm,
   // calm pass — Claude, after round 2 (Grain Duet / one body + Warm Drift's temperature colour)
   driftGrain, driftBody, bloom, tide,
-  grainDuet, twoBodies, oneBody, meter, membrane,
+  grainDuet, twoBodies, oneBody, membrane,
 ];
