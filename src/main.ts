@@ -10,7 +10,7 @@ import { Hud } from "./ui/hud";
 import { Tuner, loadEngineParams, paramsFor, savePresence } from "./ui/tuner";
 import { BEHAVIOURS, applyBehaviour } from "./engine/behaviours";
 import { VARIANTS } from "./variants";
-import type { Variant, VariantInstance } from "./variants/types";
+import type { ParamValues, Variant, VariantInstance } from "./variants/types";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $<HTMLDivElement>("stage");
@@ -202,7 +202,17 @@ micBtn.onclick = () => void toggleMicOnly();
 
 // ── variants ──
 const hud = new Hud(document.body);
-let current: { id: string; inst: VariantInstance; tuner: Tuner; mapping: string } | null = null;
+let current: { id: string; inst: VariantInstance; tuner: Tuner; mapping: string; values: ParamValues } | null = null;
+
+// The page wears the orb's own paper, so when cards shrink the orb there's no box around it.
+let pageColour = "";
+function matchPage() {
+  const c = String(current?.values.bg ?? current?.values.paper ?? "");
+  if (c === pageColour) return;
+  pageColour = c;
+  if (c) document.body.style.setProperty("--bg", c);
+  else document.body.style.removeProperty("--bg");
+}
 
 function select(id: string) {
   const v = VARIANTS.find((x) => x.id === id) ?? VARIANTS[0];
@@ -216,7 +226,8 @@ function select(id: string) {
   const inst = v.mount(stage, values);
   inst.resize(stage.clientWidth, stage.clientHeight);
   const mapping = `${v.credit ? `concept: ${v.credit} · ` : ""}${v.mapping}`;
-  current = { id: v.id, inst, tuner: new Tuner(v, values, toast, mapping), mapping };
+  current = { id: v.id, inst, tuner: new Tuner(v, values, toast, mapping), mapping, values };
+  matchPage();
   const url = new URL(location.href);
   url.searchParams.set("v", v.id);
   history.replaceState(null, "", url);
@@ -297,6 +308,7 @@ function frame(nowMs: number) {
     silentConvo.update(dt, now, false, false);
   }
   current?.inst.frame(sig, dt);
+  matchPage();
   cards.frame(sig, now);
   hud.draw(sig, current?.mapping ?? "", status);
 }
