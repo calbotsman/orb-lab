@@ -70,6 +70,11 @@ const expSelect = $<HTMLSelectElement>("exp-select");
 const cardStylePick = $<HTMLElement>("cardstyle-pick");
 const cardStyleSelect = $<HTMLSelectElement>("cardstyle-select");
 let cardsMode = params().get("exp") === "cards";
+// ?embed=1 — for showing the lab inside another page: no readouts or key hints, and the
+// pretend conversation plays silently on its own (it starts at the first click or key,
+// since browsers hold audio until then).
+const embed = params().get("embed") === "1";
+if (embed) document.body.classList.add("embed");
 function setCardsMode(on: boolean) {
   cardsMode = on;
   expSelect.value = on ? "cards" : "talk";
@@ -160,12 +165,14 @@ function startSim() {
   void g.resume();
   if (agent) stopTalk();
   sim = new SimConversation(g);
+  if (embed) g.out.gain.value = 0;
   status = "sim";
   simBtn.classList.add("on");
 }
 function stopSim() {
   sim?.dispose();
   sim = null;
+  if (graph) graph.out.gain.value = 1;
   if (status === "sim") status = "offline";
   simBtn.classList.remove("on");
 }
@@ -251,6 +258,17 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("resize", () => current?.inst.resize(stage.clientWidth, stage.clientHeight));
 
 select(new URLSearchParams(location.search).get("v") ?? VARIANTS[0].id);
+
+if (embed) {
+  hud.toggle();
+  const go = () => {
+    if (!sim && !agent) startSim();
+    else void graph?.resume();
+  };
+  go();
+  window.addEventListener("pointerdown", go, { once: true });
+  window.addEventListener("keydown", go, { once: true });
+}
 
 // ── frame loop ──
 // Before the first gesture there is no AudioContext; run a silent stand-in so variants idle.

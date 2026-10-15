@@ -98,7 +98,7 @@ export class SimConversation {
     this.youOut.connect(graph.youIn);
     const hear = ctx.createGain();
     hear.gain.value = 0.25;
-    this.youOut.connect(hear).connect(ctx.destination);
+    this.youOut.connect(hear).connect(graph.out);
     this.you = new SimVoice(ctx, this.youOut, VOICES.you);
     this.agent = new SimVoice(ctx, graph.agentBus, VOICES.agent);
     this.loop(ctx.currentTime + 0.3);

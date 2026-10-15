@@ -40,6 +40,7 @@ button {
 button.on { background: var(--chip-on); color: var(--chip-on-fg); }
 button.primary { padding: 12px 22px; font-weight: 600; }
 #keys { color: var(--muted); font-size: 11px; }
+body.embed #keys { display: none; }
 .hud {
   position: fixed; top: 12px; left: 12px; width: 284px; padding: 12px;
   background: var(--chip); border-radius: 14px; font-size: 11px;

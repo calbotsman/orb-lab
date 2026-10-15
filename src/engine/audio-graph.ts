@@ -10,6 +10,8 @@ export class AudioGraph {
   readonly youAnalyser: AnalyserNode;
   readonly agentBus: GainNode;
   readonly agentAnalyser: AnalyserNode;
+  /** Everything audible goes through here, so the lab can be muted (embeds). */
+  readonly out: GainNode;
 
   constructor() {
     const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -23,7 +25,9 @@ export class AudioGraph {
     this.agentBus = this.ctx.createGain();
     this.agentAnalyser = this.makeAnalyser();
     this.agentBus.connect(this.agentAnalyser);
-    this.agentAnalyser.connect(this.ctx.destination);
+    this.out = this.ctx.createGain();
+    this.out.connect(this.ctx.destination);
+    this.agentAnalyser.connect(this.out);
   }
 
   private makeAnalyser() {
