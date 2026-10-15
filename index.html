@@ -11,6 +11,10 @@
   </head>
   <body>
     <div id="stage"></div>
+    <nav id="panel-toggles">
+      <button id="readings-btn" title="Live signal readings (H)">Readings</button>
+      <button id="tune-btn" title="Shape, response and colour controls (G)">Tune</button>
+    </nav>
     <div id="ui">
       <div id="pickers">
         <label class="pick"><span>Orb</span><select id="orb-select"></select></label>
@@ -26,7 +30,7 @@
         <button id="sim">Sim convo</button>
         <button id="mic-only">Mic only</button>
       </div>
-      <div id="keys">← → orb · space talk · S sim · H readings · G tuner · cards: C W L T, X clear</div>
+      <div id="keys">← → orb · space talk · S sim · H readings · G tune · cards: C W L T, X clear</div>
     </div>
     <div id="toast"></div>
     <script type="module" src="/src/main.ts"></script>

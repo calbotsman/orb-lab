@@ -215,7 +215,8 @@ function select(id: string) {
   const values = paramsFor(v);
   const inst = v.mount(stage, values);
   inst.resize(stage.clientWidth, stage.clientHeight);
-  current = { id: v.id, inst, tuner: new Tuner(v, values, toast), mapping: `${v.credit ? `concept: ${v.credit} · ` : ""}${v.mapping}` };
+  const mapping = `${v.credit ? `concept: ${v.credit} · ` : ""}${v.mapping}`;
+  current = { id: v.id, inst, tuner: new Tuner(v, values, toast, mapping), mapping };
   const url = new URL(location.href);
   url.searchParams.set("v", v.id);
   history.replaceState(null, "", url);
@@ -236,7 +237,7 @@ orbSelect.replaceChildren(
 orbSelect.onchange = () => select(orbSelect.value);
 
 window.addEventListener("keydown", (e) => {
-  if ((e.target as HTMLElement).closest(".lil-gui")) return;
+  if ((e.target as HTMLElement).closest(".drawer, input")) return;
   if ((e.target as HTMLElement).tagName === "SELECT") return;
   if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
     const i = VARIANTS.findIndex((x) => x.id === current?.id);
@@ -259,8 +260,10 @@ window.addEventListener("resize", () => current?.inst.resize(stage.clientWidth, 
 
 select(new URLSearchParams(location.search).get("v") ?? VARIANTS[0].id);
 
+$<HTMLButtonElement>("readings-btn").onclick = () => hud.toggle();
+$<HTMLButtonElement>("tune-btn").onclick = () => current?.tuner.toggle();
+
 if (embed) {
-  hud.toggle();
   const go = () => {
     if (!sim && !agent) startSim();
     else void graph?.resume();
